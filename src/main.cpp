@@ -65,8 +65,12 @@ void autonomous() {
 
 
 void opcontrol() {
+	chassis.drive_brake_set(pros::E_MOTOR_BRAKE_COAST);
+
 	while(!selectingAuton) {
 		//run drive code
-		delay(10);
+		chassis.opcontrol_arcade_standard(ez::SPLIT);
+
+		delay(ez::util::DELAY_TIME);
 	}
 }
