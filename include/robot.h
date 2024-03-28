@@ -1,8 +1,6 @@
 #pragma once
 
-#define ROBOT_WHEEL_DIAM 3.25
-#define ROBOT_DRIVE_CART 200
-#define ROBOT_GEAR_RATIO 1.6667
+#include "main.h"
 
 #define RIGHT_MOTOR_1_PORT 1
 #define RIGHT_MOTOR_2_PORT 2
@@ -29,8 +27,4 @@
 #define LEFT_BACK_WINGS_PORT 'B'
 #define RIGHT_BACK_WINGS_PORT 'A'
 
-#include "main.h"
-#include "EZ-Template/api.hpp"
-
-extern ez::Drive chassis;
 extern pros::Controller master;
