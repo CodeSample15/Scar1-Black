@@ -1,25 +1,25 @@
+#define TESTING_AUTON false //PLEASE PLEASE PLEASE PLEASE ALWAYS SET TO FALSE OUTSIDE OF THE LAB, GONNA LOOK SO STUPID IF YOU DONT
+
 #include "main.h"
 #include "robot.h"
-#include "AutonSelector.h"
+#include "jank-lib/AutonSelector.h"
 
-#include <iostream> //for debugging
+//autons
+#include "autons/MatchAuton1.hpp"
+
+#include "EZ-Template/api.hpp"
+#include "okapi/api.hpp"
 
 using namespace pros;
 
-AutonSelector selector;
 bool selectingAuton = false;
+JAutonSelector selector;
 
-void select_auton_thread() 
-{
+void select_auton_thread() {
 	if(selectingAuton)
 		return; //no duplicate threads please
 
 	selectingAuton = true;
-
-	//add the autons to the selector
-	selector.add("AWP");
-
-
 	bool updateScreen = true;
 
 	master.clear();
@@ -41,36 +41,64 @@ void select_auton_thread()
   	}
 }
 
-void initialize() {}
+void initialize() {
+	//add all of the autons here
+	//selector.add("AWP")
+	//selector.add("Kill all", "humans")
+	//selector.add("Launch", "Warheads")
+
+	//pid stuff
+	chassis.pid_drive_constants_set(5, 0, 2);
+	//chassis.slew_drive_constants_set(okapi::QLength(5.0), 40);
+	chassis.pid_turn_constants_set(1, 0, 0);
+}
 
 void disabled() {}
 
-void competition_initialize() 
-{
+
+void competition_initialize() {
 	if(!selectingAuton) {
 		//calibrate
+		chassis.drive_imu_calibrate();
 
-		//start auton selection thread
 		Task t(select_auton_thread);
 	}
 }
 
+
 void autonomous() {
 	selectingAuton = false;
 
-	switch(selector.getSelected()) {
+	switch(selector.getSelected()) 
+	{
 		case 0:
 			//run auton
-			break;
-
-		default:
-			std::cout << "Auton not found" << std::endl;
 			break;
 	}
 }
 
+bool leftBackWingDeployed = false;
+bool rightBackWingDeployed = false;
 void opcontrol() {
+
+	if(TESTING_AUTON) {
+		chassis.drive_imu_calibrate();
+		matchAuton1();
+	}
+
+	chassis.drive_brake_set(E_MOTOR_BRAKE_COAST);
+
 	while(!selectingAuton) {
-		delay(10);
+		chassis.opcontrol_arcade_standard(ez::SPLIT);
+
+		//intake
+		if(master.get_digital(E_CONTROLLER_DIGITAL_R1))
+			Intake.move(-127);
+		else if(master.get_digital(E_CONTROLLER_DIGITAL_R2))
+			Intake.move(127);
+		else
+			Intake.brake();
+
+		delay(ez::util::DELAY_TIME);
 	}
 }
