@@ -7,7 +7,6 @@
 //autons
 #include "autons/MatchAuton1.hpp"
 
-#include "EZ-Template/api.hpp"
 #include "okapi/api.hpp"
 
 using namespace pros;
@@ -42,15 +41,28 @@ void select_auton_thread() {
 }
 
 void initialize() {
+	delay(500);
+
 	//add all of the autons here
 	//selector.add("AWP")
 	//selector.add("Kill all", "humans")
 	//selector.add("Launch", "Warheads")
 
 	//pid stuff
-	chassis.pid_drive_constants_set(5, 0, 2);
-	//chassis.slew_drive_constants_set(okapi::QLength(5.0), 40);
-	chassis.pid_turn_constants_set(1, 0, 0);
+	chassis.pid_heading_constants_set(4, 1, 20);
+	chassis.pid_drive_constants_set(3.8, 0, 20);
+	chassis.pid_turn_constants_set(2.5, 0, 20);
+	chassis.pid_swing_constants_set(5, 0, 30);
+
+	chassis.pid_turn_exit_condition_set(300_ms, 3_deg, 500_ms, 7_deg, 750_ms, 750_ms);
+	chassis.pid_swing_exit_condition_set(300_ms, 3_deg, 500_ms, 7_deg, 750_ms, 750_ms);
+	chassis.pid_drive_exit_condition_set(300_ms, 1_in, 500_ms, 3_in, 750_ms, 750_ms);
+
+	chassis.slew_drive_constants_set(10_in, 50);
+
+	chassis.initialize();
+
+	ez::as::initialize();
 }
 
 void disabled() {}
@@ -58,8 +70,10 @@ void disabled() {}
 
 void competition_initialize() {
 	if(!selectingAuton) {
-		//calibrate
-		chassis.drive_imu_calibrate();
+		chassis.pid_targets_reset(); // Resets PID targets to 0
+		chassis.drive_imu_reset(); // Reset gyro position to 0
+		chassis.drive_sensor_reset(); // Reset drive sensors to 0
+		chassis.drive_brake_set(MOTOR_BRAKE_HOLD);
 
 		Task t(select_auton_thread);
 	}
@@ -77,8 +91,6 @@ void autonomous() {
 	}
 }
 
-bool leftBackWingDeployed = false;
-bool rightBackWingDeployed = false;
 void opcontrol() {
 
 	if(TESTING_AUTON) {
@@ -93,9 +105,9 @@ void opcontrol() {
 
 		//intake
 		if(master.get_digital(E_CONTROLLER_DIGITAL_R1))
-			Intake.move(-127);
+			Intake.move(-100);
 		else if(master.get_digital(E_CONTROLLER_DIGITAL_R2))
-			Intake.move(127);
+			Intake.move(100);
 		else
 			Intake.brake();
 
